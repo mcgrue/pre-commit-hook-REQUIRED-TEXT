@@ -21,7 +21,7 @@ def err(s: str) -> None:
     print(s, file=sys.stderr)
 
 for string in args.required_text:
-  command = ["git", "grep", "-Hn", "--no-index", "--exclude-standard", f"{string}", *sys.argv[1:]]
+  command = ["git", "grep", "-Hn", "--no-index", "--exclude-standard", f"{string}"]
   print(f"Running command: {' '.join(command)}")
 
   res = subprocess.run(command, capture_output=True)
