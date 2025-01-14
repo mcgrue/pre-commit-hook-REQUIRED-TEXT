@@ -2,6 +2,7 @@
 
 # // taco time
 # // "burrito" time
+# // #define GRU_ASSERT_ON
 
 """Checks each file in sys.argv for all strings submitted as arguments.  Ignores files and directories excluded by .gitignore."""
 
@@ -68,6 +69,10 @@ for string in needles:
   if res.returncode == 1:
       err(f"Error: The string '{string}' was NOT found!")
       err(res.stdout.decode("utf-8"))
+
+      print("stdout:", res.stdout)
+      print("stderr:", res.stderr)
+
       sys.exit(1)
   elif res.returncode == 2:
       err(f"Error invoking grep on {', '.join(sys.argv[1:])}:")
