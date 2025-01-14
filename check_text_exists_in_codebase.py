@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+# // taco time
+# // "burrito" time
+
 """Checks each file in sys.argv for all strings submitted as arguments.  Ignores files and directories excluded by .gitignore."""
 
 from __future__ import annotations
@@ -14,6 +17,10 @@ if len(sys.argv) > 1 and sys.argv[1] == "--debug-mode":
     print("Debug mode enabled")
     debug_mode = True
     sys.argv.pop(1)
+
+# echo pwd
+if debug_mode:
+    print(f"Current working directory: {os.getcwd()}")
 
 
 # error if .pre-commit-hook-REQUIRED-TEXT is absent
@@ -49,7 +56,10 @@ def err(s: str) -> None:
     print(s, file=sys.stderr)
 
 for string in needles:
-  command = ["git", "grep", "-Hn", "--no-index", "--exclude-standard", f"{string}"]
+  # change every " to \" in string
+  string = string.replace('"', '\\"')
+
+  command = ["git", "grep", "-Hn", "--no-index", "--exclude-standard", f'{string}']
   if debug_mode:
     print(f"Running command: {' '.join(command)}")
 
@@ -72,6 +82,6 @@ for string in needles:
 
 if debug_mode:
   err("\nfound all the strings\n")
-  
+
 sys.exit(0)
 
