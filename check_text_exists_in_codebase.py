@@ -20,6 +20,10 @@ if len(args.required_text) == 0:
 def err(s: str) -> None:
     print(s, file=sys.stderr)
 
+# if "".pre-commit-config.yaml" is in args.required_text, remove it
+if ".pre-commit-config.yaml" in args.required_text:
+    args.required_text.remove(".pre-commit-config.yaml")
+
 for string in args.required_text:
   command = ["git", "grep", "-Hn", "--no-index", "--exclude-standard", f"{string}"]
   print(f"Running command: {' '.join(command)}")
