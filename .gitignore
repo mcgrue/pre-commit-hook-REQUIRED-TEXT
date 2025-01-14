@@ -1,2 +1,4 @@
 .pytype/
 .vscode/
+
+.pre-commit-hook-REQUIRED-TEXT
