@@ -1,46 +1,45 @@
 #!/usr/bin/env python
 
-"""Checks each file in sys.argv for the string "DO NOT SUBMIT"."""
+"""Checks each file in sys.argv for all strings submitted as arguments.  Ignores files and directories excluded by .gitignore."""
 
 from __future__ import annotations
 
+import argparse
 import os
 import subprocess
 import sys
 
+parser = argparse.ArgumentParser(description='strings required in the codebase to pass')
+parser.add_argument('required_text', nargs='+', help='required strings')
+args = parser.parse_args()
+
+if len(args.required_text) == 0:
+    print('Error: No required strings provided', file=sys.stderr)
+    sys.exit(1)
 
 def err(s: str) -> None:
     print(s, file=sys.stderr)
 
+for string in args.required_text:
+  command = ["git", "grep", "-Hn", "--no-index", "--exclude-standard", f"{string}", *sys.argv[1:]]
+  print(f"Running command: {' '.join(command)}")
 
-# There are many ways we could search for the string "DO NOT SUBMIT", but `git
-# grep --no-index` is nice because
-#  - it's very fast (as compared to iterating over the file in Python)
-#  - we can reasonably assume it's available on all machines
-#  - unlike plain grep, which is slower and has different flags on MacOS versus
-#    Linux, git grep is always the same.
-res = subprocess.run(
-    ["git", "grep", "-Hn", "--no-index", "DO NOT SUBMIT", *sys.argv[1:]],
-    capture_output=True,
-)
-if res.returncode == 0:
-    err('Error: The string "DO NOT SUBMIT" was found!')
-    err(res.stdout.decode("utf-8"))
-    sys.exit(1)
-elif res.returncode == 2:
-    err(f"Error invoking grep on {', '.join(sys.argv[1:])}:")
-    err(res.stderr.decode("utf-8"))
-    sys.exit(2)
+  res = subprocess.run(command, capture_output=True)
 
-res = subprocess.run(
-    ["git", "grep", "-Hn", "--no-index", "DO NOT COMMIT", *sys.argv[1:]],
-    capture_output=True,
-)
-if res.returncode == 0:
-    err('Error: The string "DO NOT COMMIT" was found!')
-    err(res.stdout.decode("utf-8"))
-    sys.exit(1)
-elif res.returncode == 2:
-    err(f"Error invoking grep on {', '.join(sys.argv[1:])}:")
-    err(res.stderr.decode("utf-8"))
-    sys.exit(2)
+  if res.returncode == 1:
+      err('Error: The string f"{string}" was NOT found!')
+      err(res.stdout.decode("utf-8"))
+      sys.exit(1)
+  elif res.returncode == 2:
+      err(f"Error invoking grep on {', '.join(sys.argv[1:])}:")
+      err(res.stderr.decode("utf-8"))
+      sys.exit(2)
+  elif res.returncode != 0:
+      err(f"Error: error finding '{string}'.  Exit code: {res.returncode}")
+      sys.exit(res.returncode)
+  
+  print("found string: ", string)
+
+err("\nfound all the strings\n")
+sys.exit(0)
+
