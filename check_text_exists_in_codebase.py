@@ -27,7 +27,7 @@ for string in args.required_text:
   res = subprocess.run(command, capture_output=True)
 
   if res.returncode == 1:
-      err('Error: The string f"{string}" was NOT found!')
+      err(f"Error: The string '{string}' was NOT found!")
       err(res.stdout.decode("utf-8"))
       sys.exit(1)
   elif res.returncode == 2:
