@@ -1,4 +1,4 @@
--   id: do-not-submit
+-   id: required-text
     name: REQUIRE TEXT
     description: Fails if required text is missing
     entry: check_text_exists_in_codebase.py
