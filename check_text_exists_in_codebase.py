@@ -4,29 +4,54 @@
 
 from __future__ import annotations
 
-import argparse
 import os
 import subprocess
 import sys
 
-parser = argparse.ArgumentParser(description='strings required in the codebase to pass')
-parser.add_argument('required_text', nargs='+', help='required strings')
-args = parser.parse_args()
+debug_mode = False
+# parse an optional command-line argument of --debug-mode
+if len(sys.argv) > 1 and sys.argv[1] == "--debug-mode":
+    print("Debug mode enabled")
+    debug_mode = True
+    sys.argv.pop(1)
 
-if len(args.required_text) == 0:
-    print('Error: No required strings provided', file=sys.stderr)
+
+# error if .pre-commit-hook-REQUIRED-TEXT is absent
+if not os.path.exists(".pre-commit-hook-REQUIRED-TEXT"):
+    print("Error: .pre-commit-hook-REQUIRED-TEXT file is absent", file=sys.stderr)
+    print("====================================================", file=sys.stderr)
+    print("1. create it", file=sys.stderr)
+    print("2. add it to your .gitignore", file=sys.stderr)
+    print("3. fill it with strings (newline delimited) that the commit hook will look for", file=sys.stderr)
     sys.exit(1)
+
+# error if .pre-commit-hook-REQUIRED-TEXT is not in your .gitignore file
+if not any(".pre-commit-hook-REQUIRED-TEXT" in line for line in open(".gitignore")):
+    print("Error: .pre-commit-hook-REQUIRED-TEXT is not in your .gitignore file", file=sys.stderr)
+    print("====================================================", file=sys.stderr)
+    print("1. add it to your .gitignore", file=sys.stderr)
+    sys.exit(1)
+
+# error if .pre-commit-hook-REQUIRED-TEXT is empty
+if os.stat(".pre-commit-hook-REQUIRED-TEXT").st_size == 0:
+    print("Error: .pre-commit-hook-REQUIRED-TEXT file is empty", file=sys.stderr)
+    print("====================================================", file=sys.stderr)
+    print("1. add strings (newline delimited) that the commit hook will look for", file=sys.stderr)
+    sys.exit(1)
+
+needles = []
+
+# read .pre-commit-hook-REQUIRED-TEXT file and put all strings in a list
+with open(".pre-commit-hook-REQUIRED-TEXT") as f:
+    needles = f.read().splitlines()
 
 def err(s: str) -> None:
     print(s, file=sys.stderr)
 
-# if "".pre-commit-config.yaml" is in args.required_text, remove it
-if ".pre-commit-config.yaml" in args.required_text:
-    args.required_text.remove(".pre-commit-config.yaml")
-
-for string in args.required_text:
+for string in needles:
   command = ["git", "grep", "-Hn", "--no-index", "--exclude-standard", f"{string}"]
-  print(f"Running command: {' '.join(command)}")
+  if debug_mode:
+    print(f"Running command: {' '.join(command)}")
 
   res = subprocess.run(command, capture_output=True)
 
@@ -42,8 +67,11 @@ for string in args.required_text:
       err(f"Error: error finding '{string}'.  Exit code: {res.returncode}")
       sys.exit(res.returncode)
   
-  print("found string: ", string)
+  if debug_mode:
+    print("found string: ", string)
 
-err("\nfound all the strings\n")
+if debug_mode:
+  err("\nfound all the strings\n")
+  
 sys.exit(0)
 
